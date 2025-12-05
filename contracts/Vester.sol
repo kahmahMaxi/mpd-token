@@ -16,9 +16,10 @@ interface IMPDToken {
 }
 
 /**
- * @notice Interface for burnable esMPD token
+ * @notice Interface for mintable/burnable esMPD token
  */
 interface IEsMPD {
+    function mint(address to, uint256 amount) external;
     function burn(address from, uint256 amount) external;
 }
 
@@ -133,7 +134,7 @@ contract Vester is Ownable, ReentrancyGuard {
 
     /**
      * @notice Deposit esMPD to begin vesting into MPD
-     * @dev esMPD is transferred to this contract and vests linearly over vestingDuration
+     * @dev esMPD is burned from user (since esMPD is non-transferable) and tracked for vesting
      * @param amount The amount of esMPD to deposit
      */
     function deposit(uint256 amount) external nonReentrant {
@@ -144,8 +145,8 @@ contract Vester is Ownable, ReentrancyGuard {
             _claim(msg.sender);
         }
 
-        // Transfer esMPD from user to this contract
-        esMpd.safeTransferFrom(msg.sender, address(this), amount);
+        // Burn esMPD from user (esMPD is non-transferable, so we burn instead of transfer)
+        IEsMPD(address(esMpd)).burn(msg.sender, amount);
 
         // Update user's vesting position
         if (depositedAmount[msg.sender] == 0) {
@@ -171,7 +172,7 @@ contract Vester is Ownable, ReentrancyGuard {
 
     /**
      * @notice Withdraw unvested esMPD and exit vesting
-     * @dev Returns remaining unvested esMPD to user and forfeits any unclaimed vested amount
+     * @dev Mints back unvested esMPD to user (since esMPD was burned on deposit) and forfeits unclaimed vested amount
      */
     function withdraw() external nonReentrant {
         if (depositedAmount[msg.sender] == 0) revert NoVestingPosition();
@@ -194,14 +195,9 @@ contract Vester is Ownable, ReentrancyGuard {
         lastClaimTime[msg.sender] = 0;
         vestingStartTime[msg.sender] = 0;
 
-        // Burn the vested portion of esMPD (already earned as MPD equivalent)
-        if (totalVested > 0) {
-            IEsMPD(address(esMpd)).burn(address(this), totalVested);
-        }
-
-        // Return unvested esMPD to user
+        // Mint back unvested esMPD to user (esMPD was burned on deposit, so we mint it back)
         if (unvested > 0) {
-            esMpd.safeTransfer(msg.sender, unvested);
+            IEsMPD(address(esMpd)).mint(msg.sender, unvested);
         }
 
         emit Withdrawn(msg.sender, unvested, forfeited);
@@ -279,6 +275,7 @@ contract Vester is Ownable, ReentrancyGuard {
 
     /**
      * @notice Internal function to process a claim
+     * @dev esMPD was already burned on deposit, so we just mint the vested MPD
      * @param user The address claiming MPD
      */
     function _claim(address user) internal {
@@ -293,10 +290,7 @@ contract Vester is Ownable, ReentrancyGuard {
         claimedAmount[user] = totalVested;
         lastClaimTime[user] = block.timestamp;
 
-        // Burn the corresponding esMPD
-        IEsMPD(address(esMpd)).burn(address(this), claimableAmount);
-
-        // Mint MPD to user
+        // Mint MPD to user (esMPD was already burned on deposit)
         IMPDToken(address(mpd)).mint(user, claimableAmount);
 
         emit Claimed(user, claimableAmount);
