@@ -1,7 +1,16 @@
 require("@nomicfoundation/hardhat-toolbox");
 require("dotenv").config();
 
-/** @type import('hardhat/config').HardhatUserConfig */
+/**
+ * @type import('hardhat/config').HardhatUserConfig
+ * 
+ * Environment Variables (set in .env file):
+ * - PRIVATE_KEY: Deployer wallet private key (without 0x prefix)
+ * - ARBITRUM_SEPOLIA_RPC_URL: RPC endpoint for Arbitrum Sepolia testnet
+ * - BASE_SEPOLIA_RPC_URL: RPC endpoint for Base Sepolia testnet
+ * - ETHERSCAN_API_KEY: API key for contract verification
+ * - REPORT_GAS: Set to "true" to enable gas reporting
+ */
 module.exports = {
   solidity: {
     version: "0.8.20",
@@ -12,6 +21,7 @@ module.exports = {
       },
     },
   },
+  defaultNetwork: "hardhat",
   networks: {
     hardhat: {
       chainId: 31337,
@@ -20,17 +30,30 @@ module.exports = {
       url: "http://127.0.0.1:8545",
       chainId: 31337,
     },
-    // Testnets - uncomment and configure as needed
+    arbitrumSepolia: {
+      url: process.env.ARBITRUM_SEPOLIA_RPC_URL || "",
+      accounts: process.env.PRIVATE_KEY ? [process.env.PRIVATE_KEY] : [],
+      chainId: 421614,
+    },
+    baseSepolia: {
+      url: process.env.BASE_SEPOLIA_RPC_URL || "",
+      accounts: process.env.PRIVATE_KEY ? [process.env.PRIVATE_KEY] : [],
+      chainId: 84532,
+    },
+    // Additional testnets - uncomment and configure as needed
     // sepolia: {
     //   url: process.env.SEPOLIA_RPC_URL || "",
     //   accounts: process.env.PRIVATE_KEY ? [process.env.PRIVATE_KEY] : [],
     //   chainId: 11155111,
     // },
-    // arbitrumSepolia: {
-    //   url: process.env.ARBITRUM_SEPOLIA_RPC_URL || "",
+    // goerli: {
+    //   url: process.env.GOERLI_RPC_URL || "",
     //   accounts: process.env.PRIVATE_KEY ? [process.env.PRIVATE_KEY] : [],
-    //   chainId: 421614,
+    //   chainId: 5,
     // },
+  },
+  etherscan: {
+    apiKey: process.env.ETHERSCAN_API_KEY || "",
   },
   gasReporter: {
     enabled: process.env.REPORT_GAS === "true",
@@ -43,4 +66,3 @@ module.exports = {
     artifacts: "./artifacts",
   },
 };
-
