@@ -6,6 +6,22 @@ import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 
+// ============ Interfaces ============
+
+/**
+ * @notice Interface for mintable MPD token
+ */
+interface IMPDToken {
+    function mint(address to, uint256 amount) external;
+}
+
+/**
+ * @notice Interface for burnable esMPD token
+ */
+interface IEsMPD {
+    function burn(address from, uint256 amount) external;
+}
+
 /**
  * @title Vester
  * @author MPD DEX Team
@@ -22,22 +38,6 @@ import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
  */
 contract Vester is Ownable, ReentrancyGuard {
     using SafeERC20 for IERC20;
-
-    // ============ Interfaces ============
-
-    /**
-     * @notice Interface for mintable MPD token
-     */
-    interface IMPDToken {
-        function mint(address to, uint256 amount) external;
-    }
-
-    /**
-     * @notice Interface for burnable esMPD token
-     */
-    interface IEsMPD {
-        function burn(address from, uint256 amount) external;
-    }
 
     // ============ State Variables ============
 
